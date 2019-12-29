@@ -1,0 +1,19 @@
+#!/home/acis/anaconda3/envs/py27/bin/python
+
+import os
+import datetime
+d=datetime.datetime.now()
+yday=d-datetime.timedelta(1,0,0)
+yday_mon=yday.month
+
+os.chdir('/home/acis/extremes')
+py_path = '/home/acis/anaconda3/envs/py27/bin/'
+## monthly records
+os.system('source {}/activate py27'.format(py_path))
+os.system('%s/python store.py -mtd get -pr mlyetm -init update -sd %s' %(py_path,yday_mon))
+
+## records set on a recent daily records and records on a calendar day
+os.system('%s/python store.py -mtd get -pr rctdly -init update -sd %s' %(py_path,yday.strftime('%Y%m%d')))
+
+## all time records cron
+os.system('%s/python store.py -mtd get -pr altetm' %py_path)

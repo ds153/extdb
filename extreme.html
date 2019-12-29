@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>EXTREMES</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="">
+
+    <!-- Le styles -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="//api.tiles.mapbox.com/mapbox.js/v2.1.4/mapbox.css" rel="stylesheet" />
+    <link href="//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.3/leaflet.fullscreen.css" rel="stylesheet" />
+
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="//api.tiles.mapbox.com/mapbox.js/v2.1.4/mapbox.js"></script>
+    <script src="//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.3/Leaflet.fullscreen.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+
+    <style>
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+
+      .swatch {
+        width: 20px;
+        height: 20px;
+        float: left;
+        margin-right: 10px;
+      }
+
+      .filter-ui {
+        position: absolute;
+        right: 10px;
+      }
+
+      legend {
+        font-size: 14px;
+        border: none;
+        display: inline;
+      }
+
+    </style>
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-default navbar-fixed-top" role="banner">
+      <div class="navbar-header">
+        <h1 class="navbar-text" style="color:#000000; font-size:20px">EXTDB - SRCC's CLIMATE EXTREMES PORTAL</h1>
+      </div>
+    </div>
+
+    <div class="col-md-2" role="complementary">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h2 class="panel-title">Select A Product</h2>
+        </div>
+        <div class="panel-body">
+          <form role="form" aria-labelledby="product">
+            <div class="form-group">
+              <label for="input_product" class="control-label"><legend id="product">Product:</legend></label>
+              <select id="input_product" class="form-control">
+                <option value="permly" data-hover="popover" title="This option displays the all-time monthly station records for a selected calendar month.">Records In A Month</option>
+                <option value="eachdly" data-hover="popover" title="This option displays daily station records for a selected day.">Records For A Calendar Day</option>
+                <option value="dlyqry" data-hover="popover" title="This option displays records set on a particular day; some days will have few or no records displayed.">Recent Daily Records</option>
+                <option value="atrecord" data-hover="popover" title="This option displays all-time records, spanning the entire calendar year and period of record for each station.">All-Time Records</option>
+              <select>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h2 class="panel-title">Select An Element</h2>
+        </div>
+        <div class="panel-body">
+          <form role="form" aria-labelledby="variable">
+            <div class="form-group">
+              <label for="input_variable_extreme" class="control-label"><legend id="variable">Variable:</legend></label>
+              <select id="input_variable_extreme" class="form-control">
+                <option value="low_mint">Low Min Temperature</option>
+                <option value="high_maxt">High Max Temperature</option>
+                <option value="high_pcpn">High Precipitation</option>
+                <option value="high_mint">High Min Temperature</option>
+                <option value="low_maxt">Low Max Temperature</option>
+              <select>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="panel panel-default" id="time_div">
+        <div class="panel-heading">
+          <h2 class="panel-title">Select A Time</h2>
+        </div>
+        <div class="panel-body">
+          <form id="form_month" role="form" aria-labelledby="month">
+            <div class="form-group">
+              <label for="input_month" class="control-label"><legend id="month">Month:</legend></label>
+              <select id="input_month" class="form-control">
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+          </form>
+          <form id="form_yearmonth" role="form">
+            <div class="form-group">
+              <label for="input_yearmonth" class="control-label">Year and Month:</label>
+              <select id="input_yearmonth" class="form-control"></select>
+            </div>
+          </form>
+          <form id="form_day" role="form">
+            <div class="form-group">
+              <label for="input_day" class="control-label">Day:</label>
+              <select id="input_day" class="form-control"></select>
+            </div>
+          </form>
+        </div>
+      </div>
+      <button id="button_go" type="button" class="btn btn-primary">GO</button>
+      <button id="button_help" type="button" class="btn btn-primary">HELP</button>
+      <button id="button_about" type="button" class="btn btn-primary">ABOUT</button>
+      <br><br><a href="http://www.rcc-acis.org/index.html"><img src="/static/acis.png" alt="Powered by ACIS" style="width:205px; height:30px;"></a>
+      <div id="filters" class="well well-sm filter-ui pull-right"></div>
+    </div>
+
+    <div class="col-md-10" role="main">
+      <div id="canvas_map"></div>
+    </div>
+
+    <div class="modal fade" id="modal_help" tabindex="-1" role="dialog" aria-labelledby="csv_modalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3 class="modal-title" id="modalLabel"></h3>
+          </div>
+          <div class="modal-body">
+            <p id="modalText"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modal_about" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3 class="modal-title">ABOUT</h3>
+          </div>
+          <div class="modal-body">
+            <p>Welcome to the Southern Regional Climate Center's Climate Extremes Portal.  The purpose of this data product is to display daily temperature and precipitation records for airport stations throughout the United States.  Four types of records are available for selection: all-time records for each month, all-time records across all months, current daily records, and new records set on a given day.  The first type will display all-time monthly records for each station.  The second type will display all-time records for each station, covering all months and each station's entire period of record.  The third type will display daily records for a chosen date for each station.  The fourth type will display any records set on a selected day (limited to within the past six months).  There are five types of variables available to display:  low minimum temperature, high minimum temperature, low maximum temperature, high maximum temperature, and high precipitation.  The first type is more commonly known as a record low temperature.  The second type refers to the warmest low temperature for a given day.  The third type refers to the coldest high temperature for a given day.  The fourth type is more commonly known as a record high temperature.  The fifth type refers to the highest amount of rainfall that has fallen on a given day.  Once selections have been made, the records will appear on the map.  You can pan and zoom the map, as well as display certain ranges.  Placing your mouse over an icon will reveal the station name, date of occurrence, and period of record for the station; the precipitation product will also include the complete daily value.  It is important to note that different stations have different periods of record.  This must be taken into account when assessing records for adjacent stations and assessing the significance of a particular warm, cold, or high precipitation event.  Product-specific explanations are available which further address these matters.  We hope you find this data product to be user-friendly and informative, and appreciate your interest in using it.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+
+      $("#canvas_map").height($(window).height() - 90);
+      $("#filters").hide();
+
+      var value_product = $("#input_product").val();
+      var month = $("#input_month").val();
+
+      productChange(value_product, month);
+
+      L.mapbox.accessToken = "pk.eyJ1Ijoic3JjYyIsImEiOiJlTGVCUUZJIn0.wtVBLySJsD08rO1jtAQNJg";
+
+      var map = L.mapbox.map("canvas_map", "srcc.hinnci74",{
+        minZoom: 7,
+      }).setView([31, -92], 7)
+
+      L.control.fullscreen().addTo(map);
+
+      var iconsLayer = L.mapbox.featureLayer();
+
+      $(document).ready(function(){
+
+        $(window).resize(function(){
+          $("#canvas_map").height($(window).height() - 90);
+        });
+
+        $("#input_month").change(function(){
+          if (value_product == "eachdly"){
+            month = $("#input_month").val();
+            setNumDays(2012, month);
+          }
+        });
+
+        $("#input_yearmonth").change(function(){
+          if (value_product == "dlyqry"){
+            var ym = $("#input_yearmonth").val().split("-");
+            setNumDays(ym[0], ym[1]);
+          }
+        })
+
+        $("#input_product").change(function(){
+          value_product = $("#input_product").val();
+          productChange(value_product, month);
+        });
+
+        $("#button_go").click(function(){
+          if (!map.hasLayer(iconsLayer)) iconsLayer.addTo(map)
+          iconsLoad();
+          if ($("#filters").is(":hidden")) $("#filters").show()
+          iconsUpdate();
+        });
+
+        $("#button_help").click(function(){
+          if (value_product == "permly"){
+            $("#modalLabel").html("RECORDS IN A MONTH:");
+            $("#modalText").html("This option displays all-time monthly records for airport stations throughout the United States.  Selecting January will display the all-time records for January, selecting February will display the all-time records for February, and so forth.  Placing your mouse over an icon will reveal the station name, date of occurrence, and the period of record for the station.  You can also zoom and pan the map, as well as display certain ranges.  It is important to note that different stations have different periods of record; this must be taken into account when assessing records for adjacent stations.  For example, station one displays an all-time record December minimum temperature of -42 deg F, nearby station two displays a record of -27 deg F.  This difference in part can be accounted for by the fact that station one has a period of record dating back to 1893, whereas station two's records only go back to 1998.")
+          }
+          else if (value_product == "eachdly"){
+            $("#modalLabel").html("RECORDS FOR A CALENDAR DAY:");
+            $("#modalText").html("This option displays current daily records for airport stations throughout the United States.  Selecting January 1 will display the current records for that day, selecting January 2 will display the current records for that day, and so forth.  Placing your mouse over an icon will reveal the station name, date of occurrence, and the period of record for the station.  You can also zoom and pan the map, as well as display certain ranges.  It is important to note that different stations have different periods of record; this must be taken into account when assessing records for adjacent stations.  For example, station one displays a record maximum temperature on July 1st of 105 deg F, nearby station two displays a record of 92 deg F.  This difference in part can be accounted for by the fact that station one has a period of record dating back to 1895, whereas station two's records only go back to 2009.")
+          }
+          else if (value_product == "dlyqry"){
+            $("#modalLabel").html("RECENT DAILY RECORDS:");
+            $("#modalText").html("This option displays new daily records set at airport stations throughout the United States.  Selecting November 15, 2014 will display new records set on that day, selecting November 16, 2014, will display new records set on that day, and so forth.  You are limited to selecting new records set within the past six months.  Placing your mouse over an icon will reveal the station's name and period of record.  You can also zoom and pan the map, as well as display certain ranges.  It is important to note that some days will have many records displayed, some only a few, and some won't have any.  It is also important to note that different stations have different periods of record; this must be taken into account when assessing the significance of a particular event.  For example, several new minimum temperature records were set in Texas on November 9th, 2014; however, when taking a closer look, it is revealed that most of the stations that set new records only have periods of record dating back to 2009, perhaps leading to the conclusion that the event was more significant than it actually was.")
+          }
+          else if (value_product == "atrecord"){
+            $("#modalLabel").html("ALL-TIME RECORDS:");
+            $("#modalText").html("This option displays all-time records for airport stations throughout the United States.  Selecting 'Low Min Temperature' will display the all-time record minimum temperatures, selecting 'High Max Temperature' will display the all-time record maximum temperatures, and so forth. Placing your mouse over an icon will reveal the station name, date of occurrence, and the period of record for the station.  You can also zoom and pan the map, as well as display certain ranges.  It is important to note that different stations have different periods of record; this must be taken into account when assessing records for adjacent stations.  For example, station one displays and all-time record minimum temperature of 6 deg F, set on February 13, 1899, nearby station two displays an all-time record of 20 deg F, set on January 7, 2014.  This difference in part can be accounted for by thefact that station one has a period of record dating back to 1893, whereas station two's records only go back to 1998.")
+          }
+          $("#modal_help").modal();
+        });
+
+        $("#button_about").click(function(){
+          $("#modal_about").modal();
+        });
+
+        map.on("dragend", function(){
+          if (map.hasLayer(iconsLayer)){
+            iconsLoad();
+            iconsUpdate();
+          }
+        })
+        .on("zoomend", function(){
+          if (map.hasLayer(iconsLayer)){
+            iconsLoad();
+            iconsUpdate();
+          }
+        });
+
+      });
+
+      function iconsLoad(){
+
+        var variable = $("#input_variable_extreme").val();
+
+        if (value_product == "permly" || value_product == "eachdly") var month = $("#input_month").val()
+        else if (value_product == "dlyqry") var month = $("#input_yearmonth").val()
+        else if (value_product == "atrecord") var month = ""
+
+        bounds_map = map.getBounds();
+        lat_north = bounds_map.getNorth();
+        lat_south = bounds_map.getSouth();
+        lng_east = bounds_map.getEast();
+        lng_west = bounds_map.getWest();
+
+        if (value_product == "permly" || value_product == "atrecord") var day = ""
+        else if (value_product == "eachdly" || value_product == "dlyqry") var day = $("#input_day").val()
+
+        $.ajax({
+          url: "getExtremeData",
+          data: {variable: variable, month: month, day: day, product: value_product, north: lat_north, south: lat_south, east: lng_east, west: lng_west, output: "json"},
+          async: false,
+          success: function(result){
+
+            $("#filters").empty();
+            iconsLayer.clearLayers();
+
+            var data = JSON.parse(result);
+
+            iconsLayer.on("layeradd", function(e){
+              var marker = e.layer, feature = marker.feature;
+              marker.setIcon(L.icon(feature.properties.icon));
+            })
+              .setGeoJSON(data.geojson)
+              .on("mouseover", function(e){
+                e.layer.openPopup();
+              })
+              .on("mouseout", function(e){
+                e.layer.closePopup();
+              });
+
+            var types = data.legend;
+
+            for (var i = 0; i < types.length; i++){
+              $("#filters").append("<div class='checkbox'><span class='swatch' style='background:" + types[i][1] + "'></span><label><input type='checkbox' value=" + types[i][0] + " name='range_temp' checked>" + types[i][0] + "</label></div>");
+            }
+
+            $("input[type='checkbox'][name='range_temp']").bind("change", iconsUpdate);
+          }
+        });
+      }
+
+      function iconsUpdate(){
+
+        var enabled = {};
+
+        $("input[type='checkbox'][name='range_temp']").each(function(index, item){
+          if (item.checked){
+            enabled[item.nextSibling.data] = true;
+          }
+        });
+
+        iconsLayer.setFilter(function(feature){
+          return (feature.properties["marker-symbol"] in enabled)
+        });
+      }
+
+      function setNumDays(year, month){
+        var num_days = moment(year+month, "YYYYMM").daysInMonth();
+        var month_moment = moment().get("month") + 1;
+        $("#input_day").empty();
+
+        if (month == month_moment && value_product == "dlyqry"){
+          var day = moment().get("date");
+          for (var i = 1; i < day; i++){
+            $("#input_day").append("<option value=" + i + ">" + i + "</option>")
+          }
+        }
+        else{
+          for (var i = 1; i <= num_days; i++){
+            $("#input_day").append("<option value=" + i + ">" + i + "</option>")
+          }
+        }
+      }
+
+      function productChange(value_product, month){
+        if (value_product == "permly"){
+          $("#form_month").show();
+          $("#form_day").hide();
+          $("#form_yearmonth").hide();
+          $("#time_div").show();
+        }
+        else if (value_product == "eachdly"){
+          $("#form_month").show();
+          $("#form_day").show();
+          $("#form_yearmonth").hide();
+          $("#time_div").show();
+          setNumDays("2012", month);
+        }
+        else if (value_product == "dlyqry"){
+          $("#form_month").hide();
+          $("#form_day").show();
+          $("#form_yearmonth").show();
+          $("#input_yearmonth").empty();
+          $("#time_div").show();
+          for (var i = 0; i < 7; i++){
+            var ym = moment().subtract(i, "months")
+            $("#input_yearmonth").append("<option value=" + ym.format("YYYYMM") + ">" + ym.format("MMM YYYY") + "</option>")
+            if (i == 0) setNumDays(ym.format("YYYY"), ym.format("MM"));
+          }
+        }
+        else if (value_product == "atrecord"){
+          $("#time_div").hide();
+        }
+      }
+
+    </script>
+
+  </body>
+
+</html>
